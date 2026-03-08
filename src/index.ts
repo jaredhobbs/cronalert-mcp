@@ -255,6 +255,10 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
+  console.error("CronAlert MCP server running on stdio");
 }
 
-main().catch(console.error);
+main().catch((err) => {
+  console.error("Fatal error:", err);
+  process.exit(1);
+});
