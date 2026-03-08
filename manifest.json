@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "cronalert-mcp",
   "display_name": "CronAlert",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Manage uptime monitors, check results, and incidents from Claude. Create monitors, check status, respond to outages.",
   "author": {
     "name": "Jared Hobbs",

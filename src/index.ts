@@ -51,7 +51,7 @@ function buildQueryString(
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.0.1",
+  version: "1.0.2",
 });
 
 // 1. list_monitors (read-only)
