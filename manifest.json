@@ -1,0 +1,33 @@
+{
+  "name": "cronalert-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for CronAlert uptime monitoring — manage monitors, check results, and incidents from any MCP-compatible AI client.",
+  "author": {
+    "name": "Jared Hobbs",
+    "url": "https://github.com/jaredhobbs"
+  },
+  "homepage": "https://cronalert.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaredhobbs/cronalert-mcp"
+  },
+  "license": "MIT",
+  "categories": ["monitoring", "devops", "automation"],
+  "tools": [
+    "list_monitors",
+    "create_monitor",
+    "get_monitor",
+    "update_monitor",
+    "delete_monitor",
+    "get_check_results",
+    "get_monitor_incidents",
+    "list_incidents",
+    "list_status_pages"
+  ],
+  "config": {
+    "CRONALERT_API_KEY": {
+      "description": "Your CronAlert API key (get one at cronalert.com/app/settings/api-keys)",
+      "required": true
+    }
+  }
+}
