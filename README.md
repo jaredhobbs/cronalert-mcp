@@ -2,6 +2,10 @@
 
 MCP server for [CronAlert](https://cronalert.com) uptime monitoring. Manage your monitors, check results, and incidents from Claude, Cursor, Windsurf, or any MCP-compatible AI client.
 
+<a href="https://glama.ai/mcp/servers/jaredhobbs/cronalert-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/jaredhobbs/cronalert-mcp/badge" alt="cronalert-mcp MCP server" />
+</a>
+
 ## Quick Start
 
 ### 1. Get your API key
