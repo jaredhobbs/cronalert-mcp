@@ -48,6 +48,14 @@ claude mcp add cronalert -e CRONALERT_API_KEY=ca_your_key -- npx -y cronalert-mc
 }
 ```
 
+**Remote server (no install needed)** — connect any MCP client to:
+
+```
+https://cronalert.com/mcp
+```
+
+Authenticate with `Authorization: Bearer ca_your_key` header. Supports Streamable HTTP transport.
+
 ### 3. Start using it
 
 Ask your AI assistant to manage your monitors (see examples below).
