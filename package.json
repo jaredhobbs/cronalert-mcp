@@ -5,13 +5,13 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "cronalert-mcp": "dist/index.js"
+    "cronalert-mcp": "dist/bundle.cjs"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && esbuild dist/index.js --bundle --platform=node --format=cjs --outfile=dist/bundle.cjs",
     "start": "node dist/index.js"
   },
   "keywords": [
@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
+    "esbuild": "^0.27.3",
     "typescript": "^5.9.3"
   }
 }
