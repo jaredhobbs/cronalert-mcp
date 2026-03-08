@@ -1,11 +1,12 @@
 {
   "manifest_version": "0.3",
   "name": "cronalert-mcp",
+  "display_name": "CronAlert",
   "version": "1.0.1",
-  "description": "MCP server for CronAlert uptime monitoring — manage monitors, check results, and incidents from any MCP-compatible AI client.",
+  "description": "Manage uptime monitors, check results, and incidents from Claude. Create monitors, check status, respond to outages.",
   "author": {
     "name": "Jared Hobbs",
-    "url": "https://github.com/jaredhobbs"
+    "email": "support@cronalert.com"
   },
   "homepage": "https://cronalert.com",
   "repository": {
@@ -16,21 +17,35 @@
   "privacy_policies": [
     "https://cronalert.com/privacy"
   ],
-  "categories": ["monitoring", "devops", "automation"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "CRONALERT_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
   "tools": [
-    "list_monitors",
-    "create_monitor",
-    "get_monitor",
-    "update_monitor",
-    "delete_monitor",
-    "get_check_results",
-    "get_monitor_incidents",
-    "list_incidents",
-    "list_status_pages"
+    { "name": "list_monitors", "description": "List all uptime monitors with status and response times" },
+    { "name": "create_monitor", "description": "Create a new HTTP monitor" },
+    { "name": "get_monitor", "description": "Get details for a specific monitor" },
+    { "name": "update_monitor", "description": "Update a monitor's settings or pause/resume it" },
+    { "name": "delete_monitor", "description": "Permanently delete a monitor" },
+    { "name": "get_check_results", "description": "Get check history with uptime percentage and response times" },
+    { "name": "get_monitor_incidents", "description": "Get incidents for a specific monitor" },
+    { "name": "list_incidents", "description": "List all active incidents across all monitors" },
+    { "name": "list_status_pages", "description": "List public status pages" }
   ],
-  "config": {
-    "CRONALERT_API_KEY": {
-      "description": "Your CronAlert API key (get one at cronalert.com/app/settings/api-keys)",
+  "tools_generated": false,
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "CronAlert API Key",
+      "description": "Get your API key from cronalert.com/app/settings/api-keys",
+      "sensitive": true,
       "required": true
     }
   }
