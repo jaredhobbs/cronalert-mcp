@@ -250,6 +250,47 @@ server.tool(
   }
 );
 
+// 10. add_incident_update (write - posts a status update on an incident)
+server.tool(
+  "add_incident_update",
+  "Post a status update on an active incident. Updates appear on the public status page.",
+  {
+    incidentId: z.string().describe("Incident ID"),
+    status: z.enum(["investigating", "identified", "monitoring", "update", "resolved"]).describe("Update status"),
+    message: z.string().describe("Update message text"),
+  },
+  {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+  },
+  async ({ incidentId, status, message }) => {
+    const data = await apiRequest(`/incidents/${incidentId}/updates`, {
+      method: "POST",
+      body: JSON.stringify({ status, message }),
+    });
+    return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// 11. get_incident_updates (read-only)
+server.tool(
+  "get_incident_updates",
+  "Get status updates for a specific incident.",
+  {
+    incidentId: z.string().describe("Incident ID"),
+  },
+  {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+  },
+  async ({ incidentId }) => {
+    const data = await apiRequest(`/incidents/${incidentId}/updates`);
+    return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
