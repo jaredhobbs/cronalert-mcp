@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.jaredhobbs/cronalert",
-  "description": "MCP server for CronAlert uptime monitoring — manage monitors, check results, and incidents from Claude, Cursor, or any MCP client.",
+  "description": "Manage CronAlert uptime monitors, check results, and incidents from any MCP client.",
   "repository": {
     "url": "https://github.com/jaredhobbs/cronalert-mcp",
     "source": "github"
