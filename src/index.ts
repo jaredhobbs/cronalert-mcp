@@ -49,9 +49,17 @@ function buildQueryString(
   return "?" + entries.map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
 }
 
+function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) result[k] = v;
+  }
+  return result;
+}
+
 const server = new McpServer({
   name: "cronalert",
-  version: "1.0.2",
+  version: "1.0.6",
 });
 
 // 1. list_monitors (read-only)
@@ -64,7 +72,6 @@ server.tool(
     status: z.enum(["up", "down", "unknown"]).optional().describe("Filter by monitor status"),
   },
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
@@ -79,24 +86,33 @@ server.tool(
 // 2. create_monitor (destructive - creates data)
 server.tool(
   "create_monitor",
-  "Create a new uptime monitor that periodically checks a URL and alerts on failure.",
+  "Create a new uptime monitor. Set type to 'heartbeat' for cron job / background task monitoring (returns a ping URL instead of checking a URL).",
   {
     name: z.string().describe("Display name for the monitor"),
-    url: z.string().url().describe("URL to monitor"),
-    checkInterval: z.number().int().positive().optional().default(180).describe("Check interval in seconds (default 180)"),
-    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]).optional().default("GET").describe("HTTP method (default GET)"),
-    expectedStatusCode: z.number().int().optional().default(200).describe("Expected HTTP status code (default 200)"),
+    type: z.enum(["http", "heartbeat"]).optional().default("http").describe("Monitor type: 'http' checks a URL, 'heartbeat' waits for pings from your application"),
+    url: z.string().url().optional().describe("URL to monitor (required for http type, ignored for heartbeat)"),
+    method: z.enum(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]).optional().default("GET").describe("HTTP method (default GET, http type only)"),
+    expectedStatusCode: z.number().int().min(100).max(599).optional().default(200).describe("Expected HTTP status code (default 200, http type only)"),
+    timeout: z.number().int().min(1).max(120).optional().default(30).describe("Request timeout in seconds (1-120, default 30, http type only)"),
+    checkInterval: z.number().int().min(30).max(86400).optional().default(180).describe("Check interval in seconds (default 180, auto-set from plan)"),
+    keyword: z.string().max(500).optional().describe("Keyword to search for in response body (Pro plan+, http type only)"),
+    keywordMatchType: z.enum(["contains", "not_contains"]).optional().describe("Whether the keyword should be present or absent (Pro plan+)"),
+    headers: z.string().max(4096).optional().describe("Custom request headers as JSON string, e.g. '{\"Authorization\": \"Bearer token\"}' (http type only)"),
+    regions: z.string().max(500).optional().describe("Comma-separated region IDs for multi-region checks: us-east, us-west, eu-west, eu-central, ap-southeast (Team plan+, http type only)"),
+    failureThreshold: z.number().int().min(0).max(5).optional().describe("Number of regions that must fail before alerting (0 = alert on any failure, multi-region only)"),
+    maintenanceStart: z.string().optional().describe("Maintenance window start as ISO datetime string (Pro plan+)"),
+    maintenanceEnd: z.string().optional().describe("Maintenance window end as ISO datetime string (Pro plan+)"),
   },
   {
-
       readOnlyHint: false,
       destructiveHint: true,
       openWorldHint: false,
   },
-  async ({ name, url, checkInterval, method, expectedStatusCode }) => {
+  async (params) => {
+    const body = stripUndefined(params as Record<string, unknown>);
     const data = await apiRequest("/monitors", {
       method: "POST",
-      body: JSON.stringify({ name, url, checkInterval, method, expectedStatusCode }),
+      body: JSON.stringify(body),
     });
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
   }
@@ -110,7 +126,6 @@ server.tool(
     id: z.string().describe("Monitor ID"),
   },
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
@@ -124,27 +139,30 @@ server.tool(
 // 4. update_monitor (destructive - modifies data)
 server.tool(
   "update_monitor",
-  "Update an existing monitor's configuration (name, URL, interval, method, etc.).",
+  "Update an existing monitor's configuration. Only provided fields are changed.",
   {
     id: z.string().describe("Monitor ID"),
     name: z.string().optional().describe("Display name"),
-    url: z.string().url().optional().describe("URL to monitor"),
-    checkInterval: z.number().int().positive().optional().describe("Check interval in seconds"),
-    method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]).optional().describe("HTTP method"),
-    expectedStatusCode: z.number().int().optional().describe("Expected HTTP status code"),
+    url: z.string().url().optional().describe("URL to monitor (http type only)"),
+    method: z.enum(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
+    expectedStatusCode: z.number().int().min(100).max(599).optional().describe("Expected HTTP status code"),
+    timeout: z.number().int().min(1).max(120).optional().describe("Request timeout in seconds (1-120)"),
+    keyword: z.string().max(500).optional().describe("Keyword to search for in response body (Pro plan+)"),
+    keywordMatchType: z.enum(["contains", "not_contains"]).optional().describe("Whether the keyword should be present or absent"),
+    headers: z.string().max(4096).optional().describe("Custom request headers as JSON string"),
+    regions: z.string().max(500).optional().describe("Comma-separated region IDs for multi-region checks (Team plan+)"),
+    failureThreshold: z.number().int().min(0).max(5).optional().describe("Number of regions that must fail before alerting"),
+    maintenanceStart: z.string().optional().describe("Maintenance window start as ISO datetime string"),
+    maintenanceEnd: z.string().optional().describe("Maintenance window end as ISO datetime string"),
     paused: z.boolean().optional().describe("Pause or resume the monitor"),
   },
   {
-
       readOnlyHint: false,
       destructiveHint: true,
       openWorldHint: false,
   },
   async ({ id, ...fields }) => {
-    const body: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(fields)) {
-      if (v !== undefined) body[k] = v;
-    }
+    const body = stripUndefined(fields as Record<string, unknown>);
     const data = await apiRequest(`/monitors/${id}`, {
       method: "PUT",
       body: JSON.stringify(body),
@@ -161,7 +179,6 @@ server.tool(
     id: z.string().describe("Monitor ID"),
   },
   {
-
       readOnlyHint: false,
       destructiveHint: true,
       openWorldHint: false,
@@ -182,7 +199,6 @@ server.tool(
     limit: z.number().int().positive().max(100).optional().describe("Results per page (max 100)"),
   },
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
@@ -204,7 +220,6 @@ server.tool(
     limit: z.number().int().positive().max(100).optional().describe("Results per page (max 100)"),
   },
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
@@ -222,7 +237,6 @@ server.tool(
   "List all active incidents across all monitors.",
   {},
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
@@ -239,7 +253,6 @@ server.tool(
   "List all public status pages configured for your account.",
   {},
   {
-
       readOnlyHint: true,
       destructiveHint: false,
       openWorldHint: false,
