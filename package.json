@@ -1,6 +1,6 @@
 {
   "name": "cronalert-mcp",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "MCP server for CronAlert uptime monitoring — manage monitors from Claude, Cursor, or any MCP client",
   "type": "module",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && esbuild dist/index.js --bundle --platform=node --format=cjs --outfile=dist/bundle.cjs",
+    "build": "tsc && esbuild dist/index.js --bundle --platform=node --format=cjs --banner:js='#!/usr/bin/env node' --outfile=dist/bundle.cjs",
     "start": "node dist/index.js"
   },
   "keywords": [
@@ -20,6 +20,7 @@
     "uptime",
     "monitoring"
   ],
+  "mcpName": "io.github.jaredhobbs/cronalert",
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
