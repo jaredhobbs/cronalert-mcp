@@ -59,7 +59,7 @@ function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.0.6",
+  version: "1.1.0",
 });
 
 // 1. list_monitors (read-only)
@@ -86,7 +86,7 @@ server.tool(
 // 2. create_monitor (destructive - creates data)
 server.tool(
   "create_monitor",
-  "Create a new uptime monitor. Set type to 'heartbeat' for cron job / background task monitoring (returns a ping URL instead of checking a URL).",
+  "Create a new uptime monitor. Supports HTTP status checks, keyword matching, regex matching, content change detection, and content staleness alerts (Pro+). Set type to 'heartbeat' for cron job / background task monitoring.",
   {
     name: z.string().describe("Display name for the monitor"),
     type: z.enum(["http", "heartbeat"]).optional().default("http").describe("Monitor type: 'http' checks a URL, 'heartbeat' waits for pings from your application"),
@@ -95,8 +95,8 @@ server.tool(
     expectedStatusCode: z.number().int().min(100).max(599).optional().default(200).describe("Expected HTTP status code (default 200, http type only)"),
     timeout: z.number().int().min(1).max(120).optional().default(30).describe("Request timeout in seconds (1-120, default 30, http type only)"),
     checkInterval: z.number().int().min(30).max(86400).optional().default(180).describe("Check interval in seconds (default 180, auto-set from plan)"),
-    keyword: z.string().max(500).optional().describe("Keyword to search for in response body (Pro plan+, http type only)"),
-    keywordMatchType: z.enum(["contains", "not_contains"]).optional().describe("Whether the keyword should be present or absent (Pro plan+)"),
+    keyword: z.string().max(500).optional().describe("Value depends on keywordMatchType: keyword text for contains/not_contains, regex pattern for regex_match/regex_not_match, number of days for content_stale, unused for content_changed (Pro+)"),
+    keywordMatchType: z.enum(["contains", "not_contains", "regex_match", "regex_not_match", "content_changed", "content_stale"]).optional().describe("Content check mode (Pro+)"),
     headers: z.string().max(4096).optional().describe("Custom request headers as JSON string, e.g. '{\"Authorization\": \"Bearer token\"}' (http type only)"),
     regions: z.string().max(500).optional().describe("Comma-separated region IDs for multi-region checks: us-east, us-west, eu-west, eu-central, ap-southeast (Team plan+, http type only)"),
     failureThreshold: z.number().int().min(0).max(5).optional().describe("Number of regions that must fail before alerting (0 = alert on any failure, multi-region only)"),
@@ -139,7 +139,7 @@ server.tool(
 // 4. update_monitor (destructive - modifies data)
 server.tool(
   "update_monitor",
-  "Update an existing monitor's configuration. Only provided fields are changed.",
+  "Update an existing monitor's configuration including content checking mode. Only provided fields are changed.",
   {
     id: z.string().describe("Monitor ID"),
     name: z.string().optional().describe("Display name"),
@@ -147,8 +147,8 @@ server.tool(
     method: z.enum(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]).optional().describe("HTTP method"),
     expectedStatusCode: z.number().int().min(100).max(599).optional().describe("Expected HTTP status code"),
     timeout: z.number().int().min(1).max(120).optional().describe("Request timeout in seconds (1-120)"),
-    keyword: z.string().max(500).optional().describe("Keyword to search for in response body (Pro plan+)"),
-    keywordMatchType: z.enum(["contains", "not_contains"]).optional().describe("Whether the keyword should be present or absent"),
+    keyword: z.string().max(500).optional().describe("Value depends on keywordMatchType: keyword text, regex pattern, number of days, or unused (Pro+)"),
+    keywordMatchType: z.enum(["contains", "not_contains", "regex_match", "regex_not_match", "content_changed", "content_stale"]).optional().describe("Content check mode (Pro+)"),
     headers: z.string().max(4096).optional().describe("Custom request headers as JSON string"),
     regions: z.string().max(500).optional().describe("Comma-separated region IDs for multi-region checks (Team plan+)"),
     failureThreshold: z.number().int().min(0).max(5).optional().describe("Number of regions that must fail before alerting"),
