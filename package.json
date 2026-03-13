@@ -1,6 +1,6 @@
 {
   "name": "cronalert-mcp",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "description": "MCP server for CronAlert uptime monitoring — manage monitors from Claude, Cursor, or any MCP client",
   "type": "module",
   "main": "dist/index.js",
