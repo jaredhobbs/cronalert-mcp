@@ -59,7 +59,7 @@ function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.1.0",
+  version: "1.2.0",
 });
 
 // 1. list_monitors (read-only)
@@ -301,6 +301,21 @@ server.tool(
   async ({ incidentId }) => {
     const data = await apiRequest(`/incidents/${incidentId}/updates`);
     return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+  }
+);
+
+// 12. import_monitors (destructive - imports data)
+server.tool(
+  "import_monitors",
+  "Import monitors from another monitoring service. Supports UptimeRobot, Pingdom, Better Stack, StatusCake, Checkly, Oh Dear, Cronitor, Healthchecks.io, Dead Man's Snitch, Datadog, CronAlert JSON, and CSV formats.",
+  {
+    format: z.enum(["uptimerobot","pingdom","betterstack","statuscake","checkly","ohdear","cronitor","healthchecks","deadmanssnitch","datadog","cronalert","csv"]).describe("Source format of the monitoring data"),
+    data: z.string().describe("Raw JSON or CSV string exported from the source service"),
+  },
+  { readOnlyHint: false, destructiveHint: true, openWorldHint: false },
+  async ({ format, data }) => {
+    const result = await apiRequest("/monitors/import", { method: "POST", body: JSON.stringify({ format, data }) });
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
   }
 );
 

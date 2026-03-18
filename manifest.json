@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "cronalert-mcp",
   "display_name": "CronAlert",
-  "version": "1.0.2",
+  "version": "1.2.0",
   "description": "Manage uptime monitors, check results, and incidents from Claude. Create monitors, check status, respond to outages.",
   "author": {
     "name": "Jared Hobbs",
@@ -37,7 +37,10 @@
     { "name": "get_check_results", "description": "Get check history with uptime percentage and response times" },
     { "name": "get_monitor_incidents", "description": "Get incidents for a specific monitor" },
     { "name": "list_incidents", "description": "List all active incidents across all monitors" },
-    { "name": "list_status_pages", "description": "List public status pages" }
+    { "name": "list_status_pages", "description": "List public status pages" },
+    { "name": "add_incident_update", "description": "Post a status update on an active incident" },
+    { "name": "get_incident_updates", "description": "Get status updates for a specific incident" },
+    { "name": "import_monitors", "description": "Import monitors from other monitoring services (UptimeRobot, Pingdom, etc.)" }
   ],
   "tools_generated": false,
   "user_config": {
