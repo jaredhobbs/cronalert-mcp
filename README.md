@@ -8,6 +8,11 @@ MCP server for [CronAlert](https://cronalert.com) uptime monitoring. Manage your
 
 Sign up at [cronalert.com](https://cronalert.com) and create an API key in [Settings > API Keys](https://cronalert.com/app/settings/api-keys).
 
+When creating the key, choose a **scope**:
+
+- **Read-only** — the agent can list and read monitors, check results, and incidents but **cannot** create, update, or delete anything. Recommended for most agent setups.
+- **Read & write** — full access, including destructive tools. Optionally enable **"require confirmation"** so deletes need a server-issued confirmation token (see [Security & permissions](#security--permissions)).
+
 ### 2. Add to your MCP client
 
 **Claude Desktop** — edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
@@ -73,6 +78,15 @@ Ask your AI assistant to manage your monitors (see examples below).
 | `get_monitor_incidents` | Incidents for a specific monitor | Read |
 | `list_incidents` | All active incidents across monitors | Read |
 | `list_status_pages` | Your public status pages | Read |
+
+## Security & permissions
+
+Approvals in MCP clients are client-side: write tools carry `destructiveHint: true`, so Claude Code / Desktop / Cursor prompt before running them. CronAlert adds two **server-side** boundaries so the client prompt isn't the only gate:
+
+- **Read-only API keys.** A read-only key is rejected on every write endpoint (create/update/delete/import) with a 403 — enforced by the server, regardless of the client. Hand agents a read-only key and destructive tools simply cannot succeed. This is the strongest boundary and the recommended default.
+- **Confirmation tokens for deletes.** If a read-write key has **"require confirmation"** enabled, `delete_monitor` first returns a preview plus a short-lived, resource-bound `confirmToken` instead of deleting. The agent must call `delete_monitor` again with that token in the `confirm` argument. This prevents a single stray or prompt-injected call from destroying data and gives the server an auditable, explicit second step.
+
+The API key is scoped to a single team, so the blast radius of any key is that team's resources.
 
 ## Examples
 

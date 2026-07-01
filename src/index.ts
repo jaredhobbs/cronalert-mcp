@@ -39,6 +39,31 @@ async function apiRequest(
   return response.json();
 }
 
+// Like apiRequest but returns the parsed body + status without throwing, so
+// callers can handle expected non-2xx responses (e.g. 428 confirmation-required).
+async function apiRequestRaw(
+  path: string,
+  options: RequestInit = {}
+): Promise<{ ok: boolean; status: number; data: unknown }> {
+  const apiKey = getApiKey();
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      ...options.headers,
+    },
+  });
+  const text = await response.text();
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = text;
+  }
+  return { ok: response.ok, status: response.status, data };
+}
+
 function buildQueryString(
   params: Record<string, string | number | undefined>
 ): string {
@@ -59,7 +84,7 @@ function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.2.0",
+  version: "1.3.0",
 });
 
 // 1. list_monitors (read-only)
@@ -174,18 +199,42 @@ server.tool(
 // 5. delete_monitor (destructive - deletes data permanently)
 server.tool(
   "delete_monitor",
-  "Permanently delete a monitor and all its check history. This cannot be undone.",
+  "Permanently delete a monitor and all its check history. This cannot be undone. If the API key requires confirmation, the first call returns a preview and a confirmToken; call again with that token in `confirm` to proceed.",
   {
     id: z.string().describe("Monitor ID"),
+    confirm: z.string().optional().describe("Server-issued confirmation token from a prior delete attempt. Only needed when the key mandates confirmation for destructive actions."),
   },
   {
       readOnlyHint: false,
       destructiveHint: true,
       openWorldHint: false,
   },
-  async ({ id }) => {
-    const data = await apiRequest(`/monitors/${id}`, { method: "DELETE" });
-    return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
+  async ({ id, confirm }) => {
+    const qs = confirm ? `?confirm=${encodeURIComponent(confirm)}` : "";
+    const res = await apiRequestRaw(`/monitors/${id}${qs}`, { method: "DELETE" });
+
+    if (res.status === 428) {
+      // Server requires an explicit, resource-bound confirmation token.
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text:
+              "Confirmation required before this monitor can be deleted.\n" +
+              JSON.stringify(res.data, null, 2) +
+              "\n\nReview the preview above, then call delete_monitor again with the confirmToken value passed as `confirm` to complete the deletion.",
+          },
+        ],
+      };
+    }
+
+    if (!res.ok) {
+      throw new Error(
+        `API error ${res.status}: ${typeof res.data === "string" ? res.data : JSON.stringify(res.data)}`
+      );
+    }
+
+    return { content: [{ type: "text" as const, text: JSON.stringify(res.data, null, 2) }] };
   }
 );
 
