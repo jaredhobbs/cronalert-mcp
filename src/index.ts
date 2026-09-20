@@ -84,7 +84,7 @@ function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.3.0",
+  version: "1.4.0",
 });
 
 // 1. list_monitors (read-only)
@@ -111,11 +111,13 @@ server.tool(
 // 2. create_monitor (destructive - creates data)
 server.tool(
   "create_monitor",
-  "Create a new uptime monitor. Supports HTTP status checks, keyword matching, regex matching, content change detection, and content staleness alerts (Pro+). Set type to 'heartbeat' for cron job / background task monitoring.",
+  "Create a new uptime monitor. Supports HTTP status checks, keyword matching, regex matching, content change detection, and content staleness alerts (Pro+). Set type to 'heartbeat' for cron job / background task monitoring, or 'tcp' (Pro+) to check that a host:port accepts connections — TCP checks can target bare IP addresses, which HTTP checks cannot.",
   {
     name: z.string().describe("Display name for the monitor"),
-    type: z.enum(["http", "heartbeat"]).optional().default("http").describe("Monitor type: 'http' checks a URL, 'heartbeat' waits for pings from your application"),
-    url: z.string().url().optional().describe("URL to monitor (required for http type, ignored for heartbeat)"),
+    type: z.enum(["http", "heartbeat", "tcp"]).optional().default("http").describe("Monitor type: 'http' checks a URL, 'heartbeat' waits for pings from your application, 'tcp' opens a connection to host:port (Pro+)"),
+    url: z.string().url().optional().describe("URL to monitor (required for http type, ignored for other types)"),
+    host: z.string().max(253).optional().describe("Hostname or IP address to connect to (tcp type only)"),
+    port: z.number().int().min(1).max(65535).optional().describe("TCP port to connect to (tcp type only; port 25 is not supported)"),
     method: z.enum(["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"]).optional().default("GET").describe("HTTP method (default GET, http type only)"),
     expectedStatusCode: z.number().int().min(100).max(599).optional().default(200).describe("Expected HTTP status code (default 200, http type only)"),
     timeout: z.number().int().min(1).max(120).optional().default(30).describe("Request timeout in seconds (1-120, default 30, http type only)"),
