@@ -84,7 +84,7 @@ function stripUndefined(obj: Record<string, unknown>): Record<string, unknown> {
 
 const server = new McpServer({
   name: "cronalert",
-  version: "1.4.0",
+  version: "1.5.0",
 });
 
 // 1. list_monitors (read-only)
