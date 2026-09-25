@@ -70,14 +70,17 @@ Ask your AI assistant to manage your monitors (see examples below).
 | Tool | Description | Type |
 |------|-------------|------|
 | `list_monitors` | List all monitors with status and response times | Read |
-| `create_monitor` | Create a new HTTP monitor | Write |
+| `create_monitor` | Create an HTTP, heartbeat, or TCP port monitor (heartbeats take an expected interval and grace period) | Write |
 | `get_monitor` | Get details for a specific monitor | Read |
-| `update_monitor` | Update settings, pause/resume | Write |
+| `update_monitor` | Update settings, heartbeat interval/grace, pause/resume | Write |
 | `delete_monitor` | Permanently delete a monitor | Write |
 | `get_check_results` | Check history with uptime % and response times | Read |
 | `get_monitor_incidents` | Incidents for a specific monitor | Read |
 | `list_incidents` | All active incidents across monitors | Read |
 | `list_status_pages` | Your public status pages | Read |
+| `add_incident_update` | Post a status update on an active incident | Write |
+| `get_incident_updates` | Status updates for an incident | Read |
+| `import_monitors` | Import monitors from UptimeRobot, Pingdom, Better Stack, StatusCake, Checkly, Oh Dear, Cronitor, Healthchecks.io, Dead Man's Snitch, Datadog, CronAlert JSON, or CSV | Write |
 
 ## Security & permissions
 
@@ -161,6 +164,17 @@ The API key is scoped to a single team, so the blast radius of any key is that t
   "lastStatus": "up"
 }
 ```
+
+### Example 4: Heartbeat for a nightly backup (v1.5.0+)
+
+**User prompt:** "Create a heartbeat monitor called Nightly DB backup that expects a ping every 24 hours with a 2-hour grace period, and give me the URL to add to the cron job."
+
+**What happens:**
+1. The AI calls `create_monitor` with `type: "heartbeat"`, `name: "Nightly DB backup"`, `checkInterval: 86400`, `gracePeriod: 7200`
+2. CronAlert returns the monitor including its unique ping `url`
+3. The AI shows the URL to append to the job, e.g. `pg_dump ... && curl -fsS <url>`
+
+`checkInterval` is the expected seconds between pings (plan minimum, 60 on Pro+, up to 604800). `gracePeriod` is optional; it defaults to the interval capped at one hour. For `http` and `tcp` monitors `checkInterval` is ignored and set from your plan.
 
 ## Requirements
 
