@@ -65,6 +65,10 @@ Authenticate with `Authorization: Bearer ca_your_key` header. Supports Streamabl
 
 Ask your AI assistant to manage your monitors (see examples below).
 
+### 4. Optional: add the Agent Skill
+
+The server gives your agent the tools; the [`cronalert-uptime-monitoring` skill](skills/cronalert-uptime-monitoring/SKILL.md) tells it when and how to use them (monitor-type selection, heartbeat grace periods, outage triage, confirm-before-delete). Copy the folder into `.claude/skills/` (Claude Code) or `~/.codex/skills/` (Codex), or install it from [Agensi](https://www.agensi.io/skills/cronalert-uptime-monitoring).
+
 ## Available Tools
 
 | Tool | Description | Type |
